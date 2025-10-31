@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Marine HVAC - FPSO Bacalhau</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="https://i.imgur.com/93MNOVp.png" alt="Supply Marine Logo">
+        </div>
+        <div class="header-title">
+            HVAC Management System - FPSO Bacalhau
+        </div>
+        <nav>
+            <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+            <button class="nav-tab" data-tab="rdo">RDO</button>
+            <button class="nav-tab" data-tab="equipamentos">Equipamentos</button>
+            <button class="nav-tab" data-tab="colaboradores">Colaboradores</button>
+            <button class="nav-tab" data-tab="servicos">Serviços</button>
+            <button class="nav-tab" data-tab="configuracoes">Configurações</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="tab-content active">
+            <h2>Dashboard - FPSO Bacalhau</h2>
+            
+            <div class="kpi-cards">
+                <div class="kpi-card">
+                    <h3>Total de Equipamentos</h3>
+                    <div class="value" id="kpi-equipamentos">35</div>
+                </div>
+                <div class="kpi-card">
+                    <h3>RDOs Este Mês</h3>
+                    <div class="value" id="kpi-rdos">0</div>
+                </div>
+                <div class="kpi-card">
+                    <h3>Horas Trabalhadas</h3>
+                    <div class="value" id="kpi-horas">0h</div>
+                </div>
+                <div class="kpi-card">
+                    <h3>Custo Total</h3>
+                    <div class="value" id="kpi-custo">R$ 0</div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-box">
+                    <h3>Status de Equipamentos</h3>
+                    <canvas id="chartStatus" width="400" height="300"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h3>RDOs por Status</h3>
+                    <canvas id="chartRDO" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- RDO -->
+        <div id="rdo" class="tab-content">
+            <h2>Gerenciamento de RDO</h2>
+
+            <div class="collapsible-header" id="formToggle">
+                ➕ Criar Nova RDO
+                <span>▼</span>
+            </div>
+            
+            <div class="collapsible-content" id="formRDOContainer">
+                <form id="formRDO">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Cliente:</label>
+                            <select name="cliente" required>
+                                <option value="Modec">Modec</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Unidade:</label>
+                            <select name="unidade" required>
+                                <option value="FPSO Bacalhau">FPSO Bacalhau</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Equipamento (TAG):</label>
+                            <select name="equipamento" id="selectEquipamento" required>
+                                <option value="">Selecione um equipamento</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo de Atividade:</label>
+                            <input type="text" name="tipoAtividade" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Serviço:</label>
+                            <select name="servico" required>
+                                <option value="">Selecione um serviço</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Colaborador:</label>
+                            <select name="colaborador" required>
+                                <option value="">Selecione um colaborador</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Status:</label>
+                            <select name="status" required>
+                                <option value="Programado">Programado</option>
+                                <option value="Em Execução">Em Execução</option>
+                                <option value="Concluído">Concluído</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Horas Trabalhadas:</label>
+                            <input type="number" name="horas" step="0.5" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Custo Total (R$):</label>
+                            <input type="number" name="custo" step="0.01" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Observações:</label>
+                        <textarea name="observacoes"></textarea>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn-primary">Criar RDO</button>
+                        <button type="reset" class="btn-secondary">Limpar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="filters">
+                <select id="filterStatus">
+                    <option value="">Todos os Status</option>
+                    <option value="Programado">Programado</option>
+                    <option value="Em Execução">Em Execução</option>
+                    <option value="Concluído">Concluído</option>
+                </select>
+                <select id="filterColaborador">
+                    <option value="">Todos os Colaboradores</option>
+                </select>
+                <button class="btn-primary" id="btnExportar">📊 Exportar CSV</button>
+            </div>
+
+            <table id="tableRDO">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Data Abertura</th>
+                        <th>Equipamento</th>
+                        <th>Serviço</th>
+                        <th>Colaborador</th>
+                        <th>Status</th>
+                        <th>Horas</th>
+                        <th>Custo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- EQUIPAMENTOS -->
+        <div id="equipamentos" class="tab-content">
+            <h2>Equipamentos HVAC - FPSO Bacalhau</h2>
+
+            <div class="filters">
+                <select id="filterLocal">
+                    <option value="">Todos os Locais</option>
+                </select>
+                <select id="filterTipo">
+                    <option value="">Todos os Tipos</option>
+                </select>
+            </div>
+
+            <table id="tableEquipamentos">
+                <thead>
+                    <tr>
+                        <th>TAG</th>
+                        <th>Tipo</th>
+                        <th>Fabricante</th>
+                        <th>Local</th>
+                        <th>Capacidade (kW)</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- COLABORADORES -->
+        <div id="colaboradores" class="tab-content">
+            <h2>Gestão de Colaboradores</h2>
+
+            <div class="collapsible-header" id="formColabToggle">
+                ➕ Adicionar Colaborador
+                <span>▼</span>
+            </div>
+
+            <div class="collapsible-content" id="formColabContainer">
+                <form id="formColab">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nome:</label>
+                            <input type="text" name="nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cargo:</label>
+                            <input type="text" name="cargo" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Telefone:</label>
+                            <input type="tel" name="telefone" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Especialidade:</label>
+                            <input type="text" name="especialidade">
+                        </div>
+                        <div class="form-group">
+                            <label>Status:</label>
+                            <select name="status">
+                                <option value="Ativo">Ativo</option>
+                                <option value="Inativo">Inativo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn-primary">Adicionar</button>
+                        <button type="reset" class="btn-secondary">Limpar</button>
+                    </div>
+                </form>
+            </div>
+
+            <table id="tableColaboradores">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Cargo</th>
+                        <th>Email</th>
+                        <th>Telefone</th>
+                        <th>RDOs</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- SERVIÇOS -->
+        <div id="servicos" class="tab-content">
+            <h2>Catálogo de Serviços</h2>
+            <div id="servicesGrid"></div>
+        </div>
+
+        <!-- CONFIGURAÇÕES -->
+        <div id="configuracoes" class="tab-content">
+            <h2>Configurações do Sistema</h2>
+
+            <div class="form-section">
+                <h3>Logo Supply Marine</h3>
+                <img src="https://i.imgur.com/93MNOVp.png" alt="Supply Marine Logo" style="max-width: 200px; height: auto;">
+            </div>
+
+            <div class="form-section">
+                <h3>Paleta de Cores</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <div style="background: #003366; color: white; padding: 20px; border-radius: 4px; text-align: center;">
+                        <strong>#003366</strong><br>Primária Escura
+                    </div>
+                    <div style="background: #1a5490; color: white; padding: 20px; border-radius: 4px; text-align: center;">
+                        <strong>#1a5490</strong><br>Primária Média
+                    </div>
+                    <div style="background: #0066CC; color: white; padding: 20px; border-radius: 4px; text-align: center;">
+                        <strong>#0066CC</strong><br>Secundária
+                    </div>
+                    <div style="background: #3399FF; color: white; padding: 20px; border-radius: 4px; text-align: center;">
+                        <strong>#3399FF</strong><br>Secundária Claro
+                    </div>
+                    <div style="background: #00AA44; color: white; padding: 20px; border-radius: 4px; text-align: center;">
+                        <strong>#00AA44</strong><br>Sucesso
+                    </div>
+                    <div style="background: #FF9900; color: white; padding: 20px; border-radius: 4px; text-align: center;">
+                        <strong>#FF9900</strong><br>Aviso
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Informações do Sistema</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Versão</div>
+                        <div class="detail-value">1.0</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Cliente</div>
+                        <div class="detail-value">Modec</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Unidade</div>
+                        <div class="detail-value">FPSO Bacalhau</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Fornecedor</div>
+                        <div class="detail-value">Supply Marine</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Estatísticas do Sistema</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Total de Equipamentos</div>
+                        <div class="detail-value" id="stat-equip">35</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Total de Colaboradores</div>
+                        <div class="detail-value" id="stat-colab">6</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Total de Serviços</div>
+                        <div class="detail-value" id="stat-serv">8</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Total de RDOs</div>
+                        <div class="detail-value" id="stat-rdos">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODALS -->
+    <div id="modalRDO" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes da RDO</h2>
+                <button class="close-btn" onclick="this.closest('.modal').classList.remove('active')">✕</button>
+            </div>
+            <div id="modalRDOBody"></div>
+        </div>
+    </div>
+
+    <div id="modalEquip" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes do Equipamento</h2>
+                <button class="close-btn" onclick="this.closest('.modal').classList.remove('active')">✕</button>
+            </div>
+            <div id="modalEquipBody"></div>
+        </div>
+    </div>
+
+    <div id="modalServico" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes do Serviço</h2>
+                <button class="close-btn" onclick="this.closest('.modal').classList.remove('active')">✕</button>
+            </div>
+            <div id="modalServicoBody"></div>
+        </div>
+    </div>
+
+    <div id="modalConfirm" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Confirmação</h2>
+                <button class="close-btn" onclick="this.closest('.modal').classList.remove('active')">✕</button>
+            </div>
+            <p id="confirmMessage"></p>
+            <div class="btn-group">
+                <button class="btn-danger" id="confirmYes">Sim, Deletar</button>
+                <button class="btn-secondary" id="confirmNo">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2025 Supply Marine - HVAC Solutions Naval & Offshore</p>
+        <p>FPSO Bacalhau | Modec Serviços de Petróleo do Brasil</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
