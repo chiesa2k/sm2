@@ -433,95 +433,81 @@ const app = {
     },
 
     drawCharts() {
-        const ctx1 = document.getElementById('chartStatus');
-        const ctx2 = document.getElementById('chartRDO');
-
-        if (ctx1) {
-            ctx1.width = ctx1.offsetWidth;
-            ctx1.height = 300;
-            const c1 = ctx1.getContext('2d');
-            this.drawDonut(c1, [28, 5, 2], ['#00AA44', '#FF9900', '#CC0000'], ['Em Dia: 28', 'Atenção: 5', 'Crítico: 2']);
-        }
-
-        if (ctx2) {
-            ctx2.width = ctx2.offsetWidth;
-            ctx2.height = 300;
-            const c2 = ctx2.getContext('2d');
-            const conclud = this.rdos.filter(r => r.status === 'Concluído').length;
-            const exec = this.rdos.filter(r => r.status === 'Em Execução').length;
-            const prog = this.rdos.filter(r => r.status === 'Programado').length;
-            this.drawBar(c2, [conclud, exec, prog], ['#00AA44', '#3399FF', '#FF9900'], ['Concluído', 'Em Exec', 'Programado']);
-        }
+        this.renderStatusChart();
+        this.renderRDOChart();
     },
 
-    drawDonut(ctx, data, colors, labels) {
-        const total = data.reduce((a, b) => a + b, 0);
-        const centerX = ctx.canvas.width / 2;
-        const centerY = ctx.canvas.height / 2;
-        const radius = 80;
-        const innerRadius = 50;
+    renderStatusChart() {
+        const ctx = document.getElementById('chartStatus')?.getContext('2d');
+        if (!ctx) return;
 
-        let currentAngle = -Math.PI / 2;
-
-        data.forEach((value, i) => {
-            const sliceAngle = (value / total) * 2 * Math.PI;
-            
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
-            ctx.lineTo(centerX + Math.cos(currentAngle + sliceAngle / 2) * innerRadius, centerY + Math.sin(currentAngle + sliceAngle / 2) * innerRadius);
-            ctx.arc(centerX, centerY, innerRadius, currentAngle + sliceAngle, currentAngle, true);
-            ctx.closePath();
-            ctx.fillStyle = colors[i];
-            ctx.fill();
-
-            const textAngle = currentAngle + sliceAngle / 2;
-            const textX = centerX + Math.cos(textAngle) * (radius + innerRadius) / 2;
-            const textY = centerY + Math.sin(textAngle) * (radius + innerRadius) / 2;
-            ctx.fillStyle = '#FFF';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(value, textX, textY);
-
-            currentAngle += sliceAngle;
-        });
-
-        let y = 20;
-        ctx.font = '12px Arial';
-        labels.forEach((label, i) => {
-            ctx.fillStyle = colors[i];
-            ctx.fillRect(10, y, 12, 12);
-            ctx.fillStyle = '#333';
-            ctx.textAlign = 'left';
-            ctx.fillText(label, 25, y + 6);
-            y += 20;
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Equipamentos em Dia', 'Requer Manutenção', 'Crítico'],
+                datasets: [{
+                    data: [28, 5, 2],
+                    backgroundColor: ['#22C55E', '#F97316', '#EF4444'],
+                    borderColor: 'rgba(255, 255, 255, 0)',
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 20,
+                            font: {
+                                size: 12,
+                            }
+                        }
+                    },
+                    tooltip: {
+                        enabled: true,
+                    }
+                }
+            }
         });
     },
 
-    drawBar(ctx, data, colors, labels) {
-        const padding = 50;
-        const chartWidth = ctx.canvas.width - padding * 2;
-        const chartHeight = ctx.canvas.height - padding * 2;
-        const barWidth = chartWidth / (data.length * 1.5);
+    renderRDOChart() {
+        const ctx = document.getElementById('chartRDO')?.getContext('2d');
+        if (!ctx) return;
 
-        const max = Math.max(...data, 1);
+        const concluded = this.rdos.filter(r => r.status === 'Concluído').length;
+        const inExecution = this.rdos.filter(r => r.status === 'Em Execução').length;
+        const programmed = this.rdos.filter(r => r.status === 'Programado').length;
 
-        data.forEach((value, i) => {
-            const x = padding + i * (barWidth * 1.5) + barWidth * 0.25;
-            const height = (value / max) * chartHeight;
-            const y = ctx.canvas.height - padding - height;
-
-            ctx.fillStyle = colors[i];
-            ctx.fillRect(x, y, barWidth, height);
-
-            ctx.fillStyle = '#FFF';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(value, x + barWidth / 2, y + height / 2);
-
-            ctx.fillStyle = '#333';
-            ctx.font = '11px Arial';
-            ctx.fillText(labels[i], x + barWidth / 2, ctx.canvas.height - padding + 15);
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Concluído', 'Em Execução', 'Programado'],
+                datasets: [{
+                    data: [concluded, inExecution, programmed],
+                    backgroundColor: ['#22C55E', '#3B82F6', '#F97316'],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
         });
     },
 
