@@ -753,7 +753,7 @@ body {
 
 /* HEADER */
 header {
-    background: var(--color-surface);
+    background: var(--color-white);
     box-shadow: var(--shadow-md);
     padding: 0;
     position: sticky;
@@ -764,7 +764,7 @@ header {
 .logo-container {
     text-align: center;
     padding: var(--space-16) 0;
-    background: linear-gradient(to bottom, var(--color-primary), var(--color-primary-hover));
+    background: var(--color-white);
 }
 
 .logo-container img {
@@ -792,7 +792,7 @@ nav {
     display: flex;
     justify-content: center;
     gap: 0;
-    background: var(--color-surface);
+    background: var(--color-white);
     border-bottom: 2px solid var(--color-border);
     padding: 0;
     flex-wrap: wrap;
